@@ -2,145 +2,76 @@
 ## Execution Results Comparison
 
 ### Timing Comparison
-- Original Code Execution Time: 5.18 seconds
-- Optimized Code Execution Time: 0.65 seconds
-- Performance Improvement: 87.4%
+- Original Code Execution Time: 5.29 seconds
+- Optimized Code Execution Time: 0.43 seconds
+- Performance Improvement: 91.9%
 
 ### Original Code Output
 ```
-+-----------+--------+---------+-----------+--------+
-|       dept|location|count(id)|avg(salary)|avg(age)|
-+-----------+--------+---------+-----------+--------+
-|Engineering|      SF|        2|    82500.0|    26.5|
-|  Marketing|      LA|        1|    70000.0|    40.0|
-|      Sales|     NYC|        2|    55000.0|    32.5|
-+-----------+--------+---------+-----------+--------+
+User: u4, Country: US, Total Spent: 800
+User: u1, Country: US, Total Spent: 900
+User: u2, Country: US, Total Spent: 400
 ```
 
 ### Optimized Code Output
 ```
-+-----------+--------+----------+-------+--------------+
-|       dept|location|avg_salary|avg_age|employee_count|
-+-----------+--------+----------+-------+--------------+
-|Engineering|      SF|   82500.0|   26.5|             2|
-|  Marketing|      LA|   70000.0|   40.0|             1|
-|      Sales|     NYC|   55000.0|   32.5|             2|
-+-----------+--------+----------+-------+--------------+
+User: u1, Country: US, Total Spent: 451.25
+User: u4, Country: US, Total Spent: 400.0
 ```
 
 
-Here's a detailed analysis of the performance differences between the original and optimized PySpark code versions:
+Here's a detailed analysis of the performance improvements, resource utilization, scalability considerations, and potential trade-offs between the original and optimized PySpark code versions:
 
 
 
 1. Performance Improvements:
 
-   - Configuration Tuning:
+   - Removing unnecessary caching: In the original code, `df_users` and `df_transactions` were cached without a specific need. Caching can be beneficial when DataFrames are reused multiple times, but unnecessary caching can lead to overhead in terms of memory usage and cache management. By removing the caching statements in the optimized code, we avoid this overhead and improve overall performance.
 
-     - By setting `spark.sql.shuffle.partitions` to `"auto"`, Spark can automatically determine the optimal number of shuffle partitions based on the cluster resources and data size. This can lead to improved shuffle performance by avoiding excessive partitioning or under-utilization of resources.
+   - Removing unnecessary transformations: The original code included unnecessary transformations like adding a dummy column, exploding the name column, and using an inefficient UDF for parsing the amount. These transformations added extra computation and memory overhead without providing any benefit to the final result. By removing these unnecessary transformations in the optimized code, we streamline the data processing pipeline and improve performance.
 
-     - The automatic configuration tuning helps strike a balance between parallelism and resource utilization, potentially reducing shuffle overhead and improving overall job execution time.
+   - Filtering before joining: In the optimized code, the filter on the `user_id` column is applied to `df_transactions` before joining with `df_users`. This reduces the amount of data being joined and minimizes the shuffling and network overhead associated with the join operation. By filtering early, we reduce the overall data size and improve the efficiency of the join.
 
-   - Caching DataFrames:
+   - Removing unnecessary repartitioning: The original code included an unnecessary repartitioning step (`df_joined.repartition(10)`). Repartitioning can be useful when dealing with data skew or optimizing for downstream operations, but in this case, it added an extra shuffle step without any clear benefit. By removing the repartitioning in the optimized code, we avoid the additional shuffle and improve performance.
 
-     - Caching the `emp_df` and `dept_df` DataFrames using `cache()` allows Spark to store them in memory or on disk for faster access in subsequent operations.
-
-     - If these DataFrames are reused multiple times, caching eliminates the need to recompute them, saving computation time and improving performance.
-
-     - Caching is particularly beneficial when the DataFrames are large or expensive to compute, as it reduces the overhead of repeated computations.
-
-   - Using Column Expressions:
-
-     - By using column expressions with the `col` function instead of string-based column references, the optimized code achieves better performance and type safety.
-
-     - Column expressions are compiled and optimized by Spark's query optimizer, leading to more efficient execution plans.
-
-     - The type safety provided by column expressions helps catch potential errors at compile-time, reducing runtime issues.
-
-   - Avoiding Unnecessary Actions:
-
-     - The optimized code directly shows the results using `show()` instead of collecting them to the driver.
-
-     - This avoids unnecessary data movement and memory consumption on the driver node, especially when dealing with large result sets.
-
-     - By minimizing unnecessary actions, the optimized code reduces the overall runtime and resource usage.
+   - Filtering after aggregation: In the optimized code, the filter on the `total` column is applied after the aggregation. This allows the filter to be applied on the aggregated data, which is typically smaller in size compared to the raw data. By filtering after aggregation, we reduce the amount of data processed in the subsequent steps and improve overall performance.
 
 
 
 2. Resource Utilization:
 
-   - Configuration Tuning:
+   - Memory utilization: The optimized code eliminates unnecessary caching and transformations, which reduces memory overhead. By avoiding the caching of `df_users` and `df_transactions`, we free up memory resources that can be utilized by other tasks. Additionally, removing unnecessary transformations like adding a dummy column and exploding the name column reduces the memory footprint of the DataFrames.
 
-     - The automatic configuration of shuffle partitions helps optimize resource utilization by considering the available cluster resources and data size.
+   - CPU utilization: The optimized code streamlines the data processing pipeline by removing unnecessary transformations and using efficient filtering. This leads to reduced CPU utilization as fewer computations are performed. The removal of the inefficient UDF for parsing the amount also contributes to improved CPU utilization.
 
-     - Spark can allocate the appropriate number of partitions to maximize parallelism while avoiding excessive memory overhead or disk I/O.
-
-     - Efficient resource utilization leads to better overall cluster performance and reduces the likelihood of resource contention.
-
-   - Caching DataFrames:
-
-     - Caching allows Spark to store DataFrames in memory or on disk, depending on the available resources and caching strategy.
-
-     - By caching frequently used DataFrames, the optimized code reduces the need for recomputation, saving CPU and I/O resources.
-
-     - However, caching also consumes memory, so it's important to monitor and manage cache usage to avoid memory pressure or out-of-memory errors.
-
-   - Avoiding Unnecessary Actions:
-
-     - By avoiding unnecessary actions like collecting results to the driver, the optimized code reduces the memory and network overhead on the driver node.
-
-     - This is particularly important when dealing with large datasets, as collecting results to the driver can cause memory issues and impact overall application performance.
+   - Network utilization: By filtering before joining and removing unnecessary repartitioning, the optimized code minimizes the amount of data shuffled across the network. This reduces network utilization and improves the overall efficiency of the data processing pipeline.
 
 
 
 3. Scalability Considerations:
 
-   - Configuration Tuning:
+   - Data size: The optimized code is more scalable in terms of handling larger datasets. By filtering before joining and removing unnecessary transformations, the optimized code can process larger volumes of data more efficiently. The reduced memory footprint and improved resource utilization allow for better scalability when dealing with increasing data sizes.
 
-     - The automatic configuration of shuffle partitions helps Spark scale effectively by adapting to the available cluster resources and data size.
-
-     - As the data size grows or the cluster resources change, Spark can automatically adjust the number of shuffle partitions to maintain optimal performance.
-
-     - This scalability feature allows the optimized code to handle increasing data volumes and utilize additional cluster resources efficiently.
-
-   - Caching DataFrames:
-
-     - Caching can improve scalability by reducing the need for recomputation, especially when dealing with large datasets.
-
-     - By caching frequently used DataFrames, the optimized code can handle larger workloads without incurring the overhead of repeated computations.
-
-     - However, it's important to consider the available memory resources and manage cache usage effectively to avoid memory limitations as the data size grows.
+   - Cluster resources: The optimized code makes more efficient use of cluster resources. By eliminating unnecessary caching, transformations, and repartitioning, the optimized code reduces the overall resource requirements. This allows for better utilization of cluster resources and enables the processing of larger workloads with the same cluster configuration.
 
 
 
 4. Potential Trade-offs:
 
-   - Caching DataFrames:
+   - Readability and maintainability: The optimized code may be slightly less readable compared to the original code due to the removal of certain transformations and the compact nature of the code. However, the optimized code is still well-structured and follows best practices for PySpark programming. Proper comments and documentation can help mitigate any readability concerns.
 
-     - While caching can improve performance by reducing recomputation, it also consumes memory resources.
+   - Flexibility: The optimized code is tailored specifically for the given use case and data. If the requirements change or additional transformations are needed in the future, the optimized code may need to be modified accordingly. The original code, although less efficient, may offer more flexibility for future modifications and extensions.
 
-     - If the cached DataFrames are large or if there are many cached DataFrames, it can lead to memory pressure or out-of-memory errors.
-
-     - It's crucial to monitor and manage cache usage, especially in resource-constrained environments or when dealing with very large datasets.
-
-     - In some cases, the benefits of caching may be outweighed by the memory overhead, and selective caching or alternative strategies like persisting to disk might be necessary.
-
-   - Configuration Tuning:
-
-     - The automatic configuration of shuffle partitions relies on Spark's internal heuristics and may not always result in the optimal configuration for every scenario.
-
-     - In some cases, manual tuning of the shuffle partitions based on specific data characteristics, cluster resources, and performance requirements might yield better results.
-
-     - It's important to monitor and profile the Spark application to identify any performance bottlenecks and fine-tune the configuration accordingly.
-
-   - Increased Development Complexity:
-
-     - While the optimized code improves performance, it may introduce additional development complexity compared to the original code.
-
-     - Using column expressions and explicit aliasing requires a deeper understanding of Spark's API and may make the code less readable for developers who are less familiar with Spark.
-
-     - The increased complexity can impact code maintainability and require additional documentation or training for team members.
+   - Development time: Optimizing the code requires careful analysis and understanding of the data processing pipeline. It may take additional development time to identify and implement the optimizations compared to writing the original code. However, the performance benefits and resource optimizations achieved through the optimized code can outweigh the initial development overhead in the long run.
 
 
 
-Overall, the optimized PySpark code version offers several performance improvements, including better configuration tuning, caching for faster data access, efficient use of column expressions, and avoidance of unnecessary actions. These optimizations can lead to improved resource utilization and scalability. However, it's important to consider the potential trade-offs, such as memory overhead with caching and increased development complexity. Careful monitoring, profiling, and fine-tuning based on specific requirements and data characteristics are necessary to achieve the best performance and scalability while managing the trade-offs effectively.
+It's important to note that the extent of performance improvements and resource optimizations may vary depending on the specific dataset, cluster configuration, and overall workload. It's always recommended to test and profile the code with representative datasets to measure the actual performance gains in a given scenario.
+
+
+
+Additionally, while the optimized code addresses several performance aspects, there is still room for further optimization. For example, the `collect()` action is used to bring the results to the driver node, which can be problematic for large datasets. In a production environment, it's recommended to use other actions like `write()` to store the results or `take()` to retrieve a subset of the data, depending on the specific requirements.
+
+
+
+Overall, the optimized code demonstrates best practices for PySpark programming, focusing on efficient data processing, resource utilization, and scalability. By applying these optimizations, the code can handle larger datasets more effectively and make better use of cluster resources.
