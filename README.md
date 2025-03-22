@@ -4,6 +4,141 @@ This project implements a Model Context Protocol (MCP) server and client for opt
 
 ## How It Works
 
+### Code Optimization Workflow
+
+```mermaid
+graph TB
+    subgraph Input
+        A[Input PySpark Code] --> |spark_code_input.py| B[run_client.py]
+    end
+
+    subgraph MCP Client
+        B --> |Async HTTP| C[SparkMCPClient]
+        C --> |Protocol Handler| D[Tools Interface]
+    end
+
+    subgraph MCP Server
+        E[run_server.py] --> F[SparkMCPServer]
+        F --> |Tool Registry| G[optimize_spark_code]
+        F --> |Tool Registry| H[analyze_performance]
+        F --> |Protocol Handler| I[Claude AI Integration]
+    end
+
+    subgraph Resources
+        I --> |Code Analysis| J[Claude AI Model]
+        J --> |Optimization| K[Optimized Code Generation]
+        K --> |Validation| L[PySpark Runtime]
+    end
+
+    subgraph Output
+        M[optimized_spark_example.py]
+        N[performance_analysis.md]
+        O[final.csv]
+    end
+
+    D --> |MCP Request| F
+    G --> |Generate| M
+    H --> |Generate| N
+    L --> |Execute| O
+
+    classDef client fill:#e1f5fe,stroke:#01579b
+    classDef server fill:#f3e5f5,stroke:#4a148c
+    classDef resource fill:#e8f5e9,stroke:#1b5e20
+    classDef output fill:#fff3e0,stroke:#e65100
+
+    class A,B,C,D client
+    class E,F,G,H,I server
+    class J,K,L resource
+    class M,N,O output
+```
+
+### Component Details
+
+1. **Input Layer**
+   - `spark_code_input.py`: Source PySpark code for optimization
+   - `run_client.py`: Client startup and configuration
+
+2. **MCP Client Layer**
+   - `SparkMCPClient`: Async client implementation
+   - Tools Interface: Protocol-compliant tool invocation
+
+3. **MCP Server Layer**
+   - `run_server.py`: Server initialization
+   - `SparkMCPServer`: Core server implementation
+   - Tool Registry: Optimization and analysis tools
+   - Protocol Handler: MCP request/response management
+
+4. **Resource Layer**
+   - Claude AI: Code analysis and optimization
+   - PySpark Runtime: Code execution and validation
+
+5. **Output Layer**
+   - `optimized_spark_example.py`: Optimized code
+   - `performance_analysis.md`: Detailed analysis
+   - `final.csv`: Execution results
+
+This workflow illustrates:
+1. Input PySpark code submission
+2. MCP protocol handling and routing
+3. Claude AI analysis and optimization
+4. Code transformation and validation
+5. Performance analysis and reporting
+
+## Architecture
+
+This project follows the Model Context Protocol architecture for standardized AI model interactions:
+
+```
+┌──────────────────┐      ┌──────────────────┐      ┌──────────────────┐
+│                  │      │   MCP Server     │      │    Resources     │
+│   MCP Client     │      │  (SparkMCPServer)│      │                  │
+│ (SparkMCPClient) │      │                  │      │ ┌──────────────┐ │
+│                  │      │    ┌─────────┐   │      │ │  Claude AI   │ │
+│   ┌─────────┐    │      │    │ Tools   │   │ <──> │ │   Model      │ │
+│   │ Tools   │    │      │    │Registry │   │      │ └──────────────┘ │
+│   │Interface│    │ <──> │    └─────────┘   │      │                  │
+│   └─────────┘    │      │    ┌─────────┐   │      │ ┌──────────────┐ │
+│                  │      │    │Protocol │   │      │ │  PySpark     │ │
+│                  │      │    │Handler  │   │      │ │  Runtime     │ │
+│                  │      │    └─────────┘   │      │ └──────────────┘ │
+└──────────────────┘      └──────────────────┘      └──────────────────┘
+
+        │                         │                          │
+        │                         │                          │
+        v                         v                          v
+┌──────────────┐          ┌──────────────┐           ┌──────────────┐
+│  Available   │          │  Registered  │           │   External   │
+│    Tools     │          │    Tools     │           │  Resources   │
+├──────────────┤          ├──────────────┤           ├──────────────┤
+│optimize_code │          │optimize_code │           │ Claude API   │
+│analyze_perf  │          │analyze_perf  │           │ Spark Engine │
+└──────────────┘          └──────────────┘           └──────────────┘
+```
+
+### Components
+
+1. **MCP Client**
+   - Provides tool interface for code optimization
+   - Handles async communication with server
+   - Manages file I/O for code generation
+
+2. **MCP Server**
+   - Implements MCP protocol handlers
+   - Manages tool registry and execution
+   - Coordinates between client and resources
+
+3. **Resources**
+   - Claude AI: Provides code optimization intelligence
+   - PySpark Runtime: Executes and validates optimizations
+
+### Protocol Flow
+
+1. Client sends optimization request via MCP protocol
+2. Server validates request and invokes appropriate tool
+3. Tool utilizes Claude AI for optimization
+4. Optimized code is returned via MCP response
+5. Client saves and validates the optimized code
+
 ### End-to-End Functionality
 
 ```mermaid
@@ -266,142 +401,6 @@ result = emp_df.join(dept_df, "dept") \
 - Improved column expressions
 - Better memory management
 ```
-
-## Architecture
-
-This project follows the Model Context Protocol architecture for standardized AI model interactions:
-
-```
-┌──────────────────┐      ┌──────────────────┐      ┌──────────────────┐
-│                  │      │   MCP Server     │      │    Resources     │
-│   MCP Client     │      │  (SparkMCPServer)│      │                  │
-│ (SparkMCPClient) │      │                  │      │ ┌──────────────┐ │
-│                  │      │    ┌─────────┐   │      │ │  Claude AI   │ │
-│   ┌─────────┐    │      │    │ Tools   │   │ <──> │ │   Model      │ │
-│   │ Tools   │    │      │    │Registry │   │      │ └──────────────┘ │
-│   │Interface│    │ <──> │    └─────────┘   │      │                  │
-│   └─────────┘    │      │    ┌─────────┐   │      │ ┌──────────────┐ │
-│                  │      │    │Protocol │   │      │ │  PySpark     │ │
-│                  │      │    │Handler  │   │      │ │  Runtime     │ │
-│                  │      │    └─────────┘   │      │ └──────────────┘ │
-└──────────────────┘      └──────────────────┘      └──────────────────┘
-
-        │                         │                          │
-        │                         │                          │
-        v                         v                          v
-┌──────────────┐          ┌──────────────┐           ┌──────────────┐
-│  Available   │          │  Registered  │           │   External   │
-│    Tools     │          │    Tools     │           │  Resources   │
-├──────────────┤          ├──────────────┤           ├──────────────┤
-│optimize_code │          │optimize_code │           │ Claude API   │
-│analyze_perf  │          │analyze_perf  │           │ Spark Engine │
-└──────────────┘          └──────────────┘           └──────────────┘
-```
-
-### Components
-
-1. **MCP Client**
-   - Provides tool interface for code optimization
-   - Handles async communication with server
-   - Manages file I/O for code generation
-
-2. **MCP Server**
-   - Implements MCP protocol handlers
-   - Manages tool registry and execution
-   - Coordinates between client and resources
-
-3. **Resources**
-   - Claude AI: Provides code optimization intelligence
-   - PySpark Runtime: Executes and validates optimizations
-
-### Protocol Flow
-
-1. Client sends optimization request via MCP protocol
-2. Server validates request and invokes appropriate tool
-3. Tool utilizes Claude AI for optimization
-4. Optimized code is returned via MCP response
-5. Client saves and validates the optimized code
-
-### Code Optimization Workflow
-
-```mermaid
-graph TB
-    subgraph Input
-        A[Input PySpark Code] --> |spark_code_input.py| B[run_client.py]
-    end
-
-    subgraph MCP Client
-        B --> |Async HTTP| C[SparkMCPClient]
-        C --> |Protocol Handler| D[Tools Interface]
-    end
-
-    subgraph MCP Server
-        E[run_server.py] --> F[SparkMCPServer]
-        F --> |Tool Registry| G[optimize_spark_code]
-        F --> |Tool Registry| H[analyze_performance]
-        F --> |Protocol Handler| I[Claude AI Integration]
-    end
-
-    subgraph Resources
-        I --> |Code Analysis| J[Claude AI Model]
-        J --> |Optimization| K[Optimized Code Generation]
-        K --> |Validation| L[PySpark Runtime]
-    end
-
-    subgraph Output
-        M[optimized_spark_example.py]
-        N[performance_analysis.md]
-        O[final.csv]
-    end
-
-    D --> |MCP Request| F
-    G --> |Generate| M
-    H --> |Generate| N
-    L --> |Execute| O
-
-    classDef client fill:#e1f5fe,stroke:#01579b
-    classDef server fill:#f3e5f5,stroke:#4a148c
-    classDef resource fill:#e8f5e9,stroke:#1b5e20
-    classDef output fill:#fff3e0,stroke:#e65100
-
-    class A,B,C,D client
-    class E,F,G,H,I server
-    class J,K,L resource
-    class M,N,O output
-```
-
-### Component Details
-
-1. **Input Layer**
-   - `spark_code_input.py`: Source PySpark code for optimization
-   - `run_client.py`: Client startup and configuration
-
-2. **MCP Client Layer**
-   - `SparkMCPClient`: Async client implementation
-   - Tools Interface: Protocol-compliant tool invocation
-
-3. **MCP Server Layer**
-   - `run_server.py`: Server initialization
-   - `SparkMCPServer`: Core server implementation
-   - Tool Registry: Optimization and analysis tools
-   - Protocol Handler: MCP request/response management
-
-4. **Resource Layer**
-   - Claude AI: Code analysis and optimization
-   - PySpark Runtime: Code execution and validation
-
-5. **Output Layer**
-   - `optimized_spark_example.py`: Optimized code
-   - `performance_analysis.md`: Detailed analysis
-   - `final.csv`: Execution results
-
-This workflow illustrates:
-1. Input PySpark code submission
-2. MCP protocol handling and routing
-3. Claude AI analysis and optimization
-4. Code transformation and validation
-5. Performance analysis and reporting
-
 
 ## Project Structure
 
