@@ -55,7 +55,11 @@ sequenceDiagram
 
 ## Usage
 
-### Quick Start
+## Requirements
+
+- Python 3.8+
+- PySpark 3.2.0+
+- Anthropic API Key (for Claude AI)
 
 ## Installation
 
@@ -63,11 +67,7 @@ sequenceDiagram
 pip install -r requirements.txt
 ```
 
-## Requirements
-
-- Python 3.8+
-- PySpark 3.2.0+
-- Anthropic API Key (for Claude AI)
+### Quick Start
 
 1. Add your Spark code to optimize in `input/spark_code_input.py`
 
@@ -119,9 +119,9 @@ ai-mcp/
 The Model Context Protocol (MCP) provides several key advantages for Spark code optimization:
 
 
-### Direct Claude AI vs MCP Server
+### Direct Claude AI Call vs MCP Server
 
-| Aspect | Direct Claude AI | MCP Server |
+| Aspect | Direct Claude AI Call | MCP Server |
 |--------|-----------------|------------|
 | **Integration** | • Custom integration per team<br>• Manual response handling<br>• Duplicate implementations | • Pre-built client libraries<br>• Automated workflows<br>• Unified interfaces |
 | **Infrastructure** | • No built-in validation<br>• No result persistence<br>• Manual tracking | • Automatic validation<br>• Result persistence<br>• Version control |
@@ -159,23 +159,6 @@ The Model Context Protocol (MCP) provides several key advantages for Spark code 
 |----------|--------------|----------|
 | Traditional | `{"type": "request",`<br>&nbsp;`"payload": {"code": code}}` | • Custom format<br>• Manual validation<br>• Custom debugging |
 | MCP | `{"method": "tools/call",`<br>&nbsp;`"params": {"name": "optimize_code"}}` | • Standard format<br>• Auto-validation<br>• Easy debugging |
-
-### Summary of Benefits
-
-1. **Standardization**
-   - Consistent interfaces across tools
-   - Predictable behavior
-   - Easier maintenance
-
-2. **Automation**
-   - Resource management
-   - Tool discovery
-   - Error handling
-
-3. **Flexibility**
-   - Easy to add new tools
-   - Simple to switch AI models
-   - Extensible architecture
 
 ## Features
 
@@ -294,8 +277,8 @@ This project follows the Model Context Protocol architecture for standardized AI
 │   MCP Client     │      │  (SparkMCPServer)│      │                  │
 │ (SparkMCPClient) │      │                  │      │ ┌──────────────┐ │
 │                  │      │    ┌─────────┐   │      │ │  Claude AI   │ │
-│   ┌─────────┐    │      │    │ Tools  │    │ <──> │ │   Model      │ │
-│   │ Tools   │    │      │    │Registry│    │      │ └──────────────┘ │
+│   ┌─────────┐    │      │    │ Tools   │   │ <──> │ │   Model      │ │
+│   │ Tools   │    │      │    │Registry │   │      │ └──────────────┘ │
 │   │Interface│    │ <──> │    └─────────┘   │      │                  │
 │   └─────────┘    │      │    ┌─────────┐   │      │ ┌──────────────┐ │
 │                  │      │    │Protocol │   │      │ │  PySpark     │ │
