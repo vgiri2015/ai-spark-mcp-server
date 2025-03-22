@@ -43,35 +43,75 @@ MCP works through a client-server architecture:
 
 # Spark MCP Server
 
+## Claude AI Context via MCP
+
+The MCP server provides Claude with structured context for Spark optimization:
+
+1. **Role Context**:
+   - Positions Claude as an expert Apache Spark optimizer
+   - Provides clear optimization objectives
+   - Sets expectations for code quality
+
+2. **Optimization Levels**:
+   - **Basic (Low)**:
+     - Add `limit(10)` to `show()` operations
+     - Add appropriate imports
+   - **Intermediate (Medium)**:
+     - Replace `cache()` with `persist(StorageLevel.MEMORY_AND_DISK)`
+     - Add broadcast hints for joins
+   - **Advanced (High)**:
+     - Add repartition before `groupBy` operations
+     - Use appropriate bucketing and partitioning
+     - Optimize join strategies
+
+3. **Input Context**:
+   - Complete Spark code from `spark_code.py`
+   - User-specified optimization level
+   - Current imports and dependencies
+
+4. **Output Expectations**:
+   - Clean, optimized code only
+   - No explanations in the output
+   - All necessary imports included
+   - Consistent with specified optimization level
+
+This structured context ensures that Claude provides consistent, high-quality optimizations tailored to the user's needs.
+
 ## Architecture Workflow
 
 ```
-+----------------+     +------------------+     +------------------+
-|                |     |                  |     |                  |
-| test_client.py |     | spark_mcp_server |     |   Claude API    |
-|                |     |                  |     |                  |
-+-------+--------+     +--------+---------+     +--------+---------+
-        |                       |                        |
-        |                       |                        |
-        |  1. Read Spark Code   |                        |
-        |  from spark_code.py   |                        |
-        |                       |                        |
-        |  2. Send to Server    |                        |
-        +----------------------->                         |
-        |                       |  3. Request            |
-        |                       |  Optimization          |
-        |                       +----------------------->|
-        |                       |                        |
-        |                       |  4. Return             |
-        |                       |  Optimized Code        |
-        |                       <-----------------------+|
-        |  5. Return Result     |                        |
-        <-----------------------+                        |
-        |                       |                        |
-        |  6. Write to         |                        |
-        |  optimized_spark_code.py                      |
-        |                       |                        |
-        v                       |                        |
++----------------+     +------------------------+     +------------------+
+|                |     |    spark_mcp_server    |     |                  |
+| test_client.py |     | +------------------+   |     |   Claude API    |
+|                |     | |      Tools       |   |     |                  |
+|                |     | | @mcp.tool()      |   |     |                  |
+|                |     | | optimize_spark   |   |     |                  |
+|                |     | +------------------+   |     |                  |
++-------+--------+     | |    Resources     |   |     +--------+---------+
+        |             | | @mcp.resource()  |   |              |
+        |             | | spark://examples |   |              |
+        |             | +------------------+   |              |
+        |             +------------+-----------+              |
+        |                          |                          |
+        |  1. Read Spark Code      |                          |
+        |  from spark_code.py      |                          |
+        |                          |                          |
+        |  2. Send to Server       |                          |
+        +------------------------->|                          |
+        |                          |  3. Request             |
+        |                          |  Optimization           |
+        |                          +------------------------->|
+        |                          |                          |
+        |                          |  4. Return              |
+        |                          |  Optimized Code         |
+        |                          |<-------------------------|
+        |  5. Return Result        |                          |
+        |<-------------------------+                          |
+        |                          |                          |
+        |  6. Write to            |                          |
+        |  optimized_spark_code.py |                          |
+        |                          |                          |
+        v                          |                          |
 ```
 
 ## MCP Decorators Explained
@@ -143,6 +183,8 @@ This approach demonstrates how MCP can be adapted from a general-purpose tool in
 
 ## Why Use spark-mcp-server Instead of Direct LLM Calls?
 
+While it's possible to directly call Claude or other LLMs for Spark code optimization, using the spark-mcp-server provides significant advantages. Think of it as a specialized middleware that not only makes the optimization process more robust but also adds several enterprise-grade features:
+
 1. **Standardized Interface**:
    - Provides a consistent API for code optimization
    - Handles request/response formatting
@@ -178,6 +220,8 @@ This approach demonstrates how MCP can be adapted from a general-purpose tool in
    - Request tracking
    - Performance metrics
    - Usage statistics
+
+In essence, spark-mcp-server transforms a simple LLM API call into a production-ready service. It handles all the complexities of enterprise requirements (security, monitoring, error handling) while maintaining the flexibility to evolve with your needs. This makes it much more suitable for production environments compared to direct LLM integration.
 
 
 ## Before and After MCP Examples
