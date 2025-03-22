@@ -34,11 +34,14 @@ result = (
 )
 
 # Optimized Code (by Claude AI):
-# Optimized code for high performance:
+Here's the optimized code with all necessary imports:
+python
+from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.window import Window
 from pyspark.storagelevel import StorageLevel
-from pyspark.sql.functions import broadcast
+
+spark = SparkSession.builder.appName("OptimizedAnalysis").getOrCreate()
 
 # Create employee and department DataFrames
 employees = [
@@ -57,10 +60,13 @@ departments = [
 emp_df = spark.createDataFrame(employees, ["id", "name", "age", "dept", "salary"])
 dept_df = spark.createDataFrame(departments, ["dept", "location", "budget"])
 
+# Broadcast the smaller DataFrame
+broadcast_dept_df = F.broadcast(dept_df)
+
 # Complex analysis with joins, window functions, and aggregations
 result = (
     emp_df.repartition("dept")
-    .join(broadcast(dept_df), "dept", "inner")
+    .join(broadcast_dept_df, "dept")
     .withColumn("avg_dept_salary", F.avg("salary").over(Window.partitionBy("dept")))
     .withColumn("salary_vs_avg", F.col("salary") - F.col("avg_dept_salary"))
     .repartition("dept", "location")
@@ -76,7 +82,7 @@ result = (
 )
 
 # Key Optimizations Applied:
-# - Used Claude AI for intelligent Spark code optimization
+# # - Used Claude AI for intelligent Spark code optimization
 # - Applied schema optimizations and type hints
 # - Added broadcast hints for small tables
 # - Optimized partitioning and storage levels

@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 from mcp import StdioServerParameters, ClientSession
 from mcp.client.stdio import stdio_client
 
@@ -9,14 +10,29 @@ logger = logging.getLogger(__name__)
 
 def write_optimization_examples(original_code: str, optimization_result):
     """Write optimization examples to markdown file."""
-    # Extract data from the response
-    response_data = optimization_result.content
-    if isinstance(response_data, list) and len(response_data) > 0:
-        result = eval(response_data[0].text)
-    else:
-        raise ValueError("No response data")
+    try:
+        # Extract data from the response
+        response_data = optimization_result.content
+        if isinstance(response_data, list) and len(response_data) > 0:
+            result = eval(response_data[0].text)
+        else:
+            raise ValueError("No response data")
         
-    content = """
+        if "status" in result and result["status"] == "error":
+            content = f"""# Error occurred during optimization:
+{result.get('message', 'Unknown error')}
+
+# Original Code:
+{original_code.strip()}"""
+        else:
+            optimized_code = result.get("optimized_code", "# No optimized code available")
+            if optimized_code.startswith("Here's the optimized code"):
+                optimized_code = optimized_code.replace(
+                    "Here's the optimized code for high performance:\n\n```python\n",
+                    "# Optimized code for high performance:\n"
+                ).replace("\n```", "").strip()
+            
+            content = """
 # Original Code:
 {}
 
@@ -27,22 +43,33 @@ def write_optimization_examples(original_code: str, optimization_result):
 # {}
 
 # These optimizations significantly improve performance, especially for larger datasets.""".format(
-        original_code.strip(),
-        result["optimized_code"].replace("Here's the optimized code for high performance:\n\n```python\n", "# Optimized code for high performance:\n").replace("\n```", "").strip(),
-        "\n".join(f"# - {opt}" for opt in result["optimizations_applied"] if opt)
-    )
-    
-    with open("optimized_spark_code.py", "w") as f:
-        f.write(content)
+                original_code.strip(),
+                optimized_code,
+                "\n".join(f"# - {opt}" for opt in result.get("optimizations_applied", []) if opt)
+            )
+        
+        with open("optimized_spark_code.py", "w") as f:
+            f.write(content)
+            
+    except Exception as e:
+        logger.error(f"Error writing optimization examples: {str(e)}")
+        content = f"""# Error occurred during optimization:
+{str(e)}
+
+# Original Code:
+{original_code.strip()}"""
+        with open("optimized_spark_code.py", "w") as f:
+            f.write(content)
 
 async def test_mcp_context():
     """Test the Spark MCP server by sending a sample code for optimization."""
     try:
-        # Create MCP client
+        # Create MCP client with environment variables
+        env = os.environ.copy()
         server_params = StdioServerParameters(
             command="python",
             args=["spark_mcp_server.py"],
-            env=None
+            env=env
         )
         async with stdio_client(server_params) as (stdio, write):
             async with ClientSession(stdio, write) as client:
