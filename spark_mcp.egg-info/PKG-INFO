@@ -1,0 +1,7 @@
+Metadata-Version: 2.4
+Name: spark-mcp
+Version: 0.1.0
+Requires-Dist: pyspark>=3.5.0
+Requires-Dist: anthropic>=0.7.0
+Requires-Dist: asyncio>=3.4.3
+Dynamic: requires-dist

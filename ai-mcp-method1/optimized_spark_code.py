@@ -34,8 +34,8 @@ result = (
 )
 
 # Optimized Code (by Claude AI):
-Here's the optimized code with all necessary imports:
-python
+# Here's the optimized code with all necessary imports:
+
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.window import Window
