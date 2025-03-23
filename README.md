@@ -31,15 +31,13 @@ graph TB
     end
 
     subgraph Output
-        M[optimized_spark_example.py]
+        M[optimized_spark_code.py]
         N[performance_analysis.md]
-        O[final.csv]
     end
 
     D --> |MCP Request| F
     G --> |Generate| M
     H --> |Generate| N
-    L --> |Execute| O
 
     classDef client fill:#e1f5fe,stroke:#01579b
     classDef server fill:#f3e5f5,stroke:#4a148c
@@ -59,12 +57,10 @@ graph TB
    - `run_client.py`: Client startup and configuration
 
 2. **MCP Client Layer**
-   - `SparkMCPClient`: Async client implementation
    - Tools Interface: Protocol-compliant tool invocation
 
 3. **MCP Server Layer**
    - `run_server.py`: Server initialization
-   - `SparkMCPServer`: Core server implementation
    - Tool Registry: Optimization and analysis tools
    - Protocol Handler: MCP request/response management
 
@@ -73,9 +69,8 @@ graph TB
    - PySpark Runtime: Code execution and validation
 
 5. **Output Layer**
-   - `optimized_spark_example.py`: Optimized code
+   - `optimized_spark_code.py`: Optimized code
    - `performance_analysis.md`: Detailed analysis
-   - `final.csv`: Execution results
 
 This workflow illustrates:
 1. Input PySpark code submission
@@ -162,7 +157,7 @@ sequenceDiagram
 ```
 
 1. **Code Submission**
-   - User places PySpark code in `input/spark_code_input.py`
+   - User places PySpark code in `v1/input/spark_code_input.py`
    - Code is read by the MCP client
 
 2. **Optimization Process**
@@ -172,7 +167,7 @@ sequenceDiagram
    - Server validates and processes suggestions
 
 3. **Code Generation**
-   - Optimized code saved to `output/optimized_spark_example.py`
+   - Optimized code saved to `v1/output/optimized_spark_code.py`
    - Includes detailed comments explaining optimizations
    - Maintains original code structure while improving performance
 
@@ -183,7 +178,7 @@ sequenceDiagram
    - Metrics collected and analyzed
 
 5. **Results Generation**
-   - Comprehensive analysis in `output/performance_analysis.md`
+   - Comprehensive analysis in `v1/output/performance_analysis.md`
    - Side-by-side execution comparison
    - Performance improvement statistics
    - Optimization explanations and rationale
