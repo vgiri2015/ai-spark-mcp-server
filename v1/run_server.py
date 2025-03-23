@@ -72,6 +72,10 @@ class SparkOptimizer:
 # Initialize MCP server
 mcp = FastMCP("spark-mcp-server")
 
+# Register tools
+mcp.register_tool("optimize_spark_code", optimize_spark_code)
+mcp.register_resource("spark_examples", get_spark_examples)
+
 @mcp.tool()
 async def optimize_spark_code(spark_code: str, optimization_level: Optional[str] = "medium") -> Dict[str, Any]:
     """
