@@ -1,9 +1,7 @@
+README.md
 setup.py
 mcp/__init__.py
 mcp/client/__init__.py
-spark_mcp/__init__.py
-spark_mcp/client.py
-spark_mcp/server.py
 spark_mcp.egg-info/PKG-INFO
 spark_mcp.egg-info/SOURCES.txt
 spark_mcp.egg-info/dependency_links.txt

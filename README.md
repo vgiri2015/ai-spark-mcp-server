@@ -1,6 +1,6 @@
 # Spark MCP (Model Context Protocol) Optimizer
 
-This project implements a Model Context Protocol (MCP) server and client for optimizing Apache Spark code using Claude AI. The system provides intelligent code optimization suggestions and performance analysis through a client-server architecture.
+This project implements a Model Context Protocol (MCP) server and client for optimizing Apache Spark code. The system provides intelligent code optimization suggestions and performance analysis through a client-server architecture.
 
 ## How It Works
 
@@ -208,12 +208,12 @@ pip install -r requirements.txt
 
 2. Start the MCP server:
 ```bash
-python run_server.py
+python v1/run_server.py
 ```
 
 3. Run the client to optimize your code:
 ```bash
-python run_client.py
+python v1/run_client.py
 ```
 
 This will generate two files:
@@ -222,7 +222,7 @@ This will generate two files:
 
 4. Run and compare code versions:
 ```bash
-python run_optimized.py
+python v1/run_optimized.py
 ```
 
 This will:
