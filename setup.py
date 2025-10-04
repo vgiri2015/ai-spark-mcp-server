@@ -1,5 +1,9 @@
 from setuptools import setup, find_packages
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 setup(
     name="spark-mcp",
     version="0.1.0",

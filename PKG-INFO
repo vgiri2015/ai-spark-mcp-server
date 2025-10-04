@@ -1,0 +1,7 @@
+Metadata-Version: 2.4
+Name: spark-mcp
+Version: ${SPARK_MCP_VERSION}
+Requires-Dist: pyspark>=${PYSPARK_VERSION}
+Requires-Dist: anthropic>=${ANTHROPIC_VERSION}
+Requires-Dist: asyncio>=${ASYNCIO_VERSION}
+Dynamic: requires-dist
