@@ -14,15 +14,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 async def write_optimization_examples(original_code: str, optimization_result):
-    """Write optimization examples to markdown file.
-    
-    Args:
-        original_code: Original Spark code
-        optimization_result: Result from MCP server
-        
-    Raises:
-        MCPClientError: If writing optimization examples fails
-    """
+    """Write optimization examples to markdown file."""
     try:
         # Extract data from the response
         if not optimization_result.content:
@@ -68,11 +60,6 @@ async def write_optimization_examples(original_code: str, optimization_result):
 #    - Optimized partition strategy
 #    - Minimized data shuffling
 #    - Used native Spark functions
-#
-# Performance Impact:
-#    - Reduced execution time
-#    - Lower memory footprint
-#    - Better scalability
 """
         
         # Write optimized code with comments
@@ -87,14 +74,7 @@ async def write_optimization_examples(original_code: str, optimization_result):
             f.write(f"# Error occurred during optimization:\n# {str(e)}")
 
 async def write_performance_results(result):
-    """Write performance optimization results to markdown file.
-    
-    Args:
-        result: Result from MCP server
-        
-    Raises:
-        MCPClientError: If writing performance results fails
-    """
+    """Write performance optimization results to markdown file."""
     try:
         if not result.content:
             raise MCPClientError("No response data received from server")
@@ -128,98 +108,64 @@ async def write_performance_results(result):
         raise MCPClientError(f"Failed to write performance results: {str(e)}")
 
 async def test_mcp_context():
-    """Test the Spark MCP server by sending a sample code for optimization.
-    
-    Raises:
-        MCPClientError: If MCP client operations fail
-        FileNotFoundError: If input file not found
-    """
+    """Test the Spark MCP server by sending a sample code for optimization."""
     try:
         # Read sample Spark code
         with open("input/spark_code_input.py", "r") as f:
             spark_code = f.read()
             
         # Initialize MCP client
-        server_params = StdioServerParameters(command="python3", args=["run_server.py"])
+        # We use python -m spark_mcp.server as the entry point
+        server_params = StdioServerParameters(command="python3", args=["-m", "spark_mcp.server"])
+        
         async with stdio_client(server_params) as (read_stream, write_stream):
-            client = ClientSession(read_stream, write_stream)
-            
-            # List available tools
-            tools = await client.list_tools()
-            logger.info("Available tools:")
-            for tool in tools:
-                logger.info(f"- {tool}")
-                
-            # Call optimize_spark_code tool
-            result = await client.call_tool(
-                "optimize_spark_code",
-                {"spark_code": spark_code, "optimization_level": "high"}
-            )
-            logger.info("Code optimization completed")
-            
-            # Write optimization examples
-            await write_optimization_examples(spark_code, result)
-            
-            # Run optimized code and update performance analysis
-            await write_performance_results(result)
-            
-            logger.info("\nOptimization examples written to output/optimized_spark_code.py")
-            logger.info("Performance analysis written to output/performance_analysis.md")
-            
-    except FileNotFoundError as e:
-        logger.error(f"Input file not found: {str(e)}")
-        raise
-    except MCPClientError as e:
-        logger.error(f"MCP client error: {str(e)}")
-        raise
-    except Exception as e:
-        logger.error(f"Unexpected error: {str(e)}")
-        raise
-        server_params = StdioServerParameters(
-            command="python",
-            args=["run_server.py"],
-            env=env
-        )
-        async with stdio_client(server_params) as (stdio, write):
-            async with ClientSession(stdio, write) as client:
+            async with ClientSession(read_stream, write_stream) as client:
                 await client.initialize()
-                # Read Spark code from file
-                with open("input/spark_code_input.py", "r") as f:
-                    spark_code = f.read()
                 
                 # List available tools
                 tools = await client.list_tools()
                 logger.info("Available tools:")
                 for tool in tools.tools:
                     logger.info(f"- {tool.name}")
-
+                    
                 # Call optimize_spark_code tool
-                result = await client.call_tool("optimize_spark_code", {
-                    "spark_code": spark_code,
-                    "optimization_level": "high"
-                })
-                
-                # Log the result
-                logger.info("Code optimization completed")
-                logger.info("Optimization Result:")
-                logger.info(result)
-                
-                # Write optimization examples to file
-                write_optimization_examples(spark_code, result)
-                logger.info("\nOptimization examples written to output/optimized_spark_code.py")
-                
-                # Run performance analysis
-                logger.info("\nRunning performance analysis...")
-                os.system(f"python {os.path.join(os.path.dirname(__file__), 'run_optimized.py')}")
-                
-                # Write performance results
-                write_performance_results(result)
-                
-                # Get available examples
-                examples = await client.read_resource("spark://examples")
-                logger.info("\nAvailable Spark Examples:")
-                logger.info(examples)
+                logger.info("Calling optimize_spark_code...")
+                try:
+                    result = await client.call_tool(
+                        "optimize_spark_code",
+                        {"spark_code": spark_code, "optimization_level": "high"}
+                    )
+                    
+                    # Log raw content for debugging
+                    if result.content:
+                        logger.info(f"Tool Result Content: {result.content[0].text[:200]}...")
+
+                    # Write optimization examples
+                    await write_optimization_examples(spark_code, result)
+                    
+                    # Write performance results
+                    await write_performance_results(result)
+                except Exception as e:
+                    logger.error(f"Tool execution failed: {e}")
+
+                # Test reading resources
+                logger.info("Reading spark examples...")
+                try:
+                    examples = await client.read_resource("spark://examples")
+                    logger.info(f"Examples resource content: {examples.contents[0].text[:200]}...")
+                except Exception as e:
+                    logger.error(f"Failed to read examples: {e}")
+
+                logger.info("\nVerify output files in output/")
+
             
+    except FileNotFoundError as e:
+        logger.error(f"Input file not found: {str(e)}")
+        # Create a dummy input file if it doesn't exist for testing
+        os.makedirs("input", exist_ok=True)
+        with open("input/spark_code_input.py", "w") as f:
+            f.write("# Dummy spark code\ndf = spark.createDataFrame([])\ndf.show()")
+        logger.info("Created dummy input/spark_code_input.py. Please run again.")
     except Exception as e:
         logger.error(f"Error testing MCP context: {str(e)}")
         raise

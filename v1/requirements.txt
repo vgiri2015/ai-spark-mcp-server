@@ -1,4 +1,5 @@
-mcp>=0.1.0
-pyspark>=3.0.0
-anthropic>=0.3.0
-pydantic>=2.5.1
+mcp
+pyspark
+anthropic
+pydantic
+# Use a config file or environment variables to specify versions

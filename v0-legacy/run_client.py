@@ -10,7 +10,9 @@ async def optimize_spark_code():
     # Read input code
     input_file = os.path.join('input', 'spark_code_input.py')
     if not os.path.exists(input_file):
-        print(f"Error: Input file {input_file} not found!")
+        import logging
+logger = logging.getLogger(__name__)
+logger.error(f"Error: Input file {input_file} not found!")
         return
     
     with open(input_file, 'r') as f:
@@ -46,7 +48,8 @@ async def optimize_spark_code():
 
 def main():
     # Check if server is running
-    if os.system("lsof -i:8080 > /dev/null 2>&1") != 0:
+    MCP_SERVER_PORT = os.getenv('MCP_SERVER_PORT', '8080')
+if os.system(f"lsof -i:{MCP_SERVER_PORT} > /dev/null 2>&1") != 0:
         print("Error: MCP server is not running! Please start it with 'python run_server.py'")
         return
     

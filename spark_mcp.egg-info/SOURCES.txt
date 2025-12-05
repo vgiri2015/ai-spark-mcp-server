@@ -7,3 +7,5 @@ spark_mcp.egg-info/SOURCES.txt
 spark_mcp.egg-info/dependency_links.txt
 spark_mcp.egg-info/requires.txt
 spark_mcp.egg-info/top_level.txt
+# Add logging to track file inclusion and changes
+# Add logging to track file inclusion and changes

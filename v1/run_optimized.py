@@ -23,7 +23,11 @@ def run_code_with_timing(code_path):
     """Run code and return execution time and output."""
     with capture_stdout() as output:
         start_time = time.time()
-        exec(open(code_path).read())
+        def execute_code(code_path):
+    with open(code_path) as code_file:
+        exec(code_file.read())
+
+execute_code(code_path)
         end_time = time.time()
     
     return end_time - start_time, output.getvalue()
@@ -31,7 +35,7 @@ def run_code_with_timing(code_path):
 def update_performance_analysis(original_time, optimized_time, original_output, optimized_output):
     """Update performance analysis with execution results."""
     output_dir = os.path.join(os.path.dirname(__file__), "output")
-    analysis_file = os.path.join(output_dir, "performance_analysis.md")
+    analysis_file = os.path.join(output_dir, os.path.basename("performance_analysis.md"))
     
     if not os.path.exists(analysis_file):
         print("Error: No performance analysis found. Please run run_client.py first.")
@@ -79,8 +83,8 @@ def main():
     try:
         # Get paths
         base_dir = os.path.dirname(__file__)
-        input_dir = os.path.join(base_dir, "input")
-        output_dir = os.path.join(base_dir, "output")
+        input_dir = os.getenv('INPUT_DIR', os.path.join(base_dir, "input"))
+output_dir = os.getenv('OUTPUT_DIR', os.path.join(base_dir, "output"))
         original_file = os.path.join(input_dir, "spark_code_input.py")
         optimized_file = os.path.join(output_dir, "optimized_spark_code.py")
         
@@ -88,7 +92,10 @@ def main():
             print("Error: No optimized code found. Please run run_client.py first.")
             sys.exit(1)
             
-        print("\nRunning original Spark code...")
+        import logging
+logger = logging.getLogger(__name__)
+
+logger.info("ai-spark-mcp-server/v1/run_optimized.py: Running original Spark code...")
         print("-" * 50)
         original_time, original_output = run_code_with_timing(original_file)
         
@@ -108,8 +115,8 @@ def main():
         print(f"  {os.path.join(output_dir, 'performance_analysis.md')}")
         
     except Exception as e:
-        print(f"\nError running code comparison: {str(e)}")
-        sys.exit(1)
+    logger.error("ai-spark-mcp-server/v1/run_optimized.py: Error running code comparison", exc_info=True)
+    print("An error occurred. Check the logs for details.")
 
 if __name__ == "__main__":
     main()
